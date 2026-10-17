@@ -107,3 +107,11 @@ def test_one_call_pipeline_outputs_metric_scene_and_audited_renders(monkeypatch,
     assert res['render_validation']['photographic_identity_guaranteed'] is False
     assert pathlib.Path(res['model_glb']).read_bytes()[:4]==b'glTF'
     assert pathlib.Path(res['render_audit']).is_file()
+
+
+def test_stdio_mcp_advertises_matching_runtime_version():
+    import subprocess
+    req=json.dumps({'jsonrpc':'2.0','id':1,'method':'initialize','params':{'protocolVersion':'2025-11-25'}})+'\n'
+    run=subprocess.run([sys.executable,str(ROOT/'runtime'/'server.py')],input=req,capture_output=True,text=True,timeout=10,check=True)
+    response=json.loads(run.stdout.strip())
+    assert response['result']['serverInfo']['version']=='0.3.1'
