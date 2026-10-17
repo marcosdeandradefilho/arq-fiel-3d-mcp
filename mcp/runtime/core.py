@@ -381,20 +381,44 @@ def inspect_source(path):
     raise ValueError('Formato não aceito. Use PDF, PNG/JPEG/WEBP/TIFF, DXF, IFC ou JSON normalizado.')
 
 
-def render_views(model_glb, views_json, output_dir, blender_executable='blender', samples=32):
-    if pathlib.Path(blender_executable).name.lower() not in ('blender','blender.exe'):
+def render_views(model_glb, views_json, output_dir, blender_executable='blender', samples=128):
+    """Render approved GLB with Blender Cycles, preserving the model source.
+
+    Requires Blender installed on the execution host; never silently downgrades
+    quality to a generic CPU preview or substitutes AI-generated geometry.
+    """
+    if pathlib.Path(blender_executable).name.lower() not in ('blender', 'blender.exe'):
         raise ValueError('Somente o executável Blender é permitido para renderização.')
-    binary=shutil.which(blender_executable) if blender_executable=='blender' else blender_executable
+    binary = shutil.which(blender_executable) if blender_executable == 'blender' else blender_executable
     if not binary or not pathlib.Path(binary).is_file():
-        raise RuntimeError('Blender não instalado/encontrado. GLB e vistas continuam disponíveis; instale Blender para PNGs.')
-    if not 1<=int(samples)<=256:raise ValueError('samples deve ficar entre 1 e 256.')
-    model=pathlib.Path(model_glb).resolve();views=pathlib.Path(views_json).resolve()
-    if not model.is_file() or model.suffix!='.glb' or not views.is_file():raise ValueError('Arquivos de modelo e de vistas inválidos.')
-    dest=pathlib.Path(output_dir).resolve();dest.mkdir(parents=True,exist_ok=True)
-    script=pathlib.Path(__file__).with_name('blender_render.py')
-    args=[str(binary),'--background','--python',str(script),'--',str(model),str(views),str(dest),str(int(samples))]
-    run=subprocess.run(args,capture_output=True,text=True,timeout=240,check=False)
-    if run.returncode:raise RuntimeError('Blender falhou: '+run.stderr[-1800:])
-    return {'ok':True,'pngs':[str(p) for p in sorted(dest.glob('comodo_*.png'))],
-            'renderer':'Blender Eevee; iluminação procedural e volumes genéricos',
-            'warning':'Render físico aproximado, não foto nem levantamento arquitetônico certificado.'}
+        raise RuntimeError('Blender Cycles não instalado neste executor; render físico indisponível.')
+    if type(samples) is not int or not 16 <= samples <= 1024:
+        raise ValueError('samples deve ficar entre 16 e 1024.')
+    model = pathlib.Path(model_glb).resolve()
+    views = pathlib.Path(views_json).resolve()
+    if not model.is_file() or model.suffix.lower() != '.glb' or not views.is_file():
+        raise ValueError('Arquivos de modelo e de vistas inválidos.')
+    definitions = json.loads(views.read_text(encoding='utf-8'))
+    if not isinstance(definitions, dict) or not 1 <= len(definitions) <= 150:
+        raise ValueError('Lista de vistas inválida ou vazia.')
+    dest = pathlib.Path(output_dir).resolve()
+    dest.mkdir(parents=True, exist_ok=True)
+    script = pathlib.Path(__file__).with_name('blender_render.py')
+    args = [str(binary), '--background', '--python', str(script), '--', str(model),
+            str(views), str(dest), str(samples)]
+    # Renderings can be expensive. Keep an upper bound and always report failure.
+    run = subprocess.run(args, capture_output=True, text=True, timeout=1800, check=False)
+    if run.returncode:
+        raise RuntimeError('Blender Cycles falhou: ' + run.stderr[-1800:])
+    images = sorted(dest.glob('comodo_*.png'))
+    if len(images) != len(definitions):
+        raise RuntimeError(f'Blender gerou {len(images)} de {len(definitions)} vistas solicitadas.')
+    if any(p.stat().st_size < 100 or p.open('rb').read(8) != b'\x89PNG\r\n\x1a\n' for p in images):
+        raise RuntimeError('Uma ou mais imagens Blender possuem PNG inválido.')
+    manifest = dest / 'render_manifest.json'
+    if not manifest.is_file():
+        raise RuntimeError('Renderizador não produziu manifesto auditável.')
+    return {'ok': True, 'pngs': [str(p) for p in images],
+            'renderer': 'Blender Cycles (path tracing + denoising)',
+            'manifest': str(manifest),
+            'warning': 'Render físico da geometria aprovada: materiais e aparência real exigem evidência; não prova as-built.'}
