@@ -17,3 +17,19 @@ test('returns useful result for image content',async()=>{const original=global.f
  try{const r=resp();await proxy(fake('POST',{name:'preview_room',arguments:{project:{}}}),r);assert.equal(r.data.content[0].type,'image')}finally{global.fetch=original;if(previous)process.env.ARQFIEL_MCP_API_KEY=previous;else delete process.env.ARQFIEL_MCP_API_KEY}});
 test('backend endpoint is never taken from user request',async()=>{const r=resp();await proxy(fake('POST',{name:'validate_project',arguments:{},url:'https://hostile.example/'}),r);assert.notEqual(r.statusCode,200)});
 test('status responds without exposing secrets',async()=>{const r=resp();await status({method:'GET'},r);assert.equal(r.data.name,'ArqFiel Studio');assert.ok(!JSON.stringify(r.data).includes('ARQFIEL_MCP_API_KEY'))});
+
+
+test('status reports false readiness on real MCP 401 without exposing credentials',async()=>{
+ const oldFetch=global.fetch,oldKey=process.env.ARQFIEL_MCP_API_KEY,oldSso=process.env.ARQFIEL_STUDIO_SSO_CONFIRMED;
+ process.env.ARQFIEL_MCP_API_KEY='fake-test-secret';process.env.ARQFIEL_STUDIO_SSO_CONFIRMED='true';
+ global.fetch=async()=>({status:401,ok:false});
+ try{const r=resp();await status({method:'GET'},r);assert.equal(r.statusCode,200);assert.equal(r.data.ready,false);assert.match(r.data.reason,/chave de autenticação/i);assert.ok(!JSON.stringify(r.data).includes('fake-test-secret'))}
+ finally{global.fetch=oldFetch;if(oldKey===undefined)delete process.env.ARQFIEL_MCP_API_KEY;else process.env.ARQFIEL_MCP_API_KEY=oldKey;if(oldSso===undefined)delete process.env.ARQFIEL_STUDIO_SSO_CONFIRMED;else process.env.ARQFIEL_STUDIO_SSO_CONFIRMED=oldSso}
+});
+test('status only reports ready when MCP lists tools',async()=>{
+ const oldFetch=global.fetch,oldKey=process.env.ARQFIEL_MCP_API_KEY,oldSso=process.env.ARQFIEL_STUDIO_SSO_CONFIRMED;
+ process.env.ARQFIEL_MCP_API_KEY='fake-test-secret';process.env.ARQFIEL_STUDIO_SSO_CONFIRMED='true';
+ global.fetch=async()=>({status:200,ok:true,async json(){return {jsonrpc:'2.0',result:{tools:[{name:'validate_project'}]}}}});
+ try{const r=resp();await status({method:'GET'},r);assert.equal(r.statusCode,200);assert.equal(r.data.ready,true);assert.equal(r.data.tools,1)}
+ finally{global.fetch=oldFetch;if(oldKey===undefined)delete process.env.ARQFIEL_MCP_API_KEY;else process.env.ARQFIEL_MCP_API_KEY=oldKey;if(oldSso===undefined)delete process.env.ARQFIEL_STUDIO_SSO_CONFIRMED;else process.env.ARQFIEL_STUDIO_SSO_CONFIRMED=oldSso}
+});
