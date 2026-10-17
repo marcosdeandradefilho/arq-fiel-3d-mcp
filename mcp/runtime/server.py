@@ -60,7 +60,7 @@ def dispatch(message):
         if method=='initialize':
             version=params.get('protocolVersion','2025-11-25')
             result={'protocolVersion':version,'capabilities':{'tools':{}},
-                    'serverInfo':{'name':'arq-fiel-3d','version':'0.2.0'},
+                    'serverInfo':{'name':'arq-fiel-3d','version':'0.3.1'},
                     'instructions':'Leitura preliminar de plantas + GLB em escala a partir de dados confirmados. Sem certificação as-built/estrutural.'}
         elif method=='ping': result={}
         elif method=='tools/list':result={'tools':TOOLS}
