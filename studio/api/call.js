@@ -23,7 +23,7 @@ module.exports=async function handler(req,res){
     const controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),27000);
     let upstream;
     try{upstream=await fetch(BACKEND,{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json,text/event-stream',Authorization:'Bearer '+key},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'tools/call',params:{name:body.name,arguments:body.arguments}}),signal:controller.signal})}finally{clearTimeout(timeout)}
-    if(!upstream.ok)return json(res,502,{error:'MCP remoto indisponível ('+upstream.status+').'});
+    if(!upstream.ok)return json(res,502,{error:upstream.status===401?'Falha de autenticação: o token do Studio não coincide com o token do MCP. Sincronize ARQFIEL_MCP_API_KEY no Vercel.':'MCP remoto indisponível ('+upstream.status+').'});
     const data=await upstream.json();
     if(data.error)return json(res,502,{error:typeof data.error.message==='string'?data.error.message:'Resposta MCP inválida.'});
     if(!data.result||!Array.isArray(data.result.content))return json(res,502,{error:'Formato MCP inesperado.'});
