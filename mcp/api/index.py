@@ -45,9 +45,9 @@ def _fail(exc):
     return {'content':[{'type':'text','text':json.dumps(item,ensure_ascii=False)}],'structuredContent':item,'isError':True}
 
 @app.get('/api/health')
-def health():return {'status':'running','name':'arq-fiel-3d-mcp','version':'0.2.0',
+def health():return {'status':'running','name':'arq-fiel-3d-mcp','version':'0.3.1',
                       'mcp_auth_configured':bool(os.getenv('ARQFIEL_MCP_API_KEY')),
-                      'renderer':'CPU preview; local Blender for physical rendering'}
+                      'renderer':'CPU geometric preview; Blender Cycles requires separately provisioned compute'}
 
 @app.post('/api/mcp')
 async def mcp(request:Request):
@@ -69,7 +69,7 @@ async def mcp(request:Request):
     mid=msg['id'];method=msg.get('method');args=(msg.get('params') or {}).get('arguments') or {}
     if method=='initialize':
         reply=dispatch(msg)
-        reply['result']['serverInfo']['version']='0.2.0'
+        reply['result']['serverInfo']['version']='0.3.1'
         return JSONResponse(reply)
     if method=='ping':return JSONResponse(_response(mid,{}))
     if method=='tools/list':return JSONResponse(_response(mid,{'tools':ALLOWED_TOOLS}))
