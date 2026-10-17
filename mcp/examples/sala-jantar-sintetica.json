@@ -1,0 +1,43 @@
+{
+  "schema_version": "1.0",
+  "project": {
+    "name": "Sala e jantar - caso sintetico",
+    "units": "m",
+    "source_note": "Exemplo ficticio de teste, nao representa apartamento real"
+  },
+  "evidence": {
+    "source_type": "manual-dimensioned-plan",
+    "source_file": "ficcao-para-testes.json",
+    "scale_verified": true,
+    "dimensions_confirmed_by_user": true,
+    "building_as_built_verified": false,
+    "structural_approval": false
+  },
+  "level": {"id": "pavimento-1", "ceiling_height": 2.8},
+  "rooms": [
+    {"id": "sala", "name": "Sala de estar", "polygon": [[0,0],[4,0],[4,3],[0,3]], "floor_color": "#BC916D"},
+    {"id": "jantar", "name": "Sala de jantar", "polygon": [[4,0],[7,0],[7,3],[4,3]], "floor_color": "#A57956"}
+  ],
+  "walls": [
+    {"id":"parede_sala_sul","from":[0,0],"to":[4,0],"thickness":0.15},
+    {"id":"parede_compartilhada","from":[4,0],"to":[4,3],"thickness":0.15,"structural_assessment":"not-confirmed","openings":[{"id":"arco_jantar","kind":"arch","offset":0.5,"width":2.0,"sill":0,"spring_height":2.1,"rise":0.35}]},
+    {"id":"parede_sala_norte","from":[4,3],"to":[0,3],"thickness":0.15},
+    {"id":"parede_sala_oeste","from":[0,3],"to":[0,0],"thickness":0.15,"openings":[{"id":"janela_sala","kind":"window","offset":0.7,"width":1.5,"sill":1.0,"height":1.3}]},
+    {"id":"parede_jantar_sul","from":[4,0],"to":[7,0],"thickness":0.15},
+    {"id":"parede_jantar_leste","from":[7,0],"to":[7,3],"thickness":0.15},
+    {"id":"parede_jantar_norte","from":[7,3],"to":[4,3],"thickness":0.15}
+  ],
+  "furniture": [
+    {"id":"sofa","room_id":"sala","type":"sofa","center":[1.7,0.9],"size":[1.8,0.8,0.8],"rotation_deg":0,"color":"#695D52"},
+    {"id":"mesa_jantar","room_id":"jantar","type":"dining_table","center":[5.5,1.5],"size":[1.6,0.85,0.75],"rotation_deg":0,"color":"#684C37"}
+  ],
+  "style": {
+    "user_brief": "Colonial brasileiro nordestino contemporaneo, acolhedor, madeira e ceramica",
+    "wall_color": "#EAE1D4",
+    "default_floor_color": "#BB9A7B"
+  },
+  "constraints": [
+    "Preservar todas as paredes, exceto abertura sintética representada no arco",
+    "Porta antiga da area de servico permanece fechada: nao criar abertura old_service_door"
+  ]
+}

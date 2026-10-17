@@ -1,0 +1,27 @@
+# Credenciais, plantas reais, artefatos e ambientes locais
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.p12
+*.pfx
+node_modules/
+__pycache__/
+.pytest_cache/
+.venv/
+.vercel/
+coverage/
+dist/
+build/
+*.glb
+*.gltf
+*.png
+*.jpg
+*.jpeg
+*.pdf
+*.dxf
+*.ifc
+*.blend
+*.mp4
+!mcp/examples/*.json

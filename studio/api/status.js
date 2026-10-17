@@ -1,0 +1,2 @@
+'use strict';
+module.exports=function handler(req,res){res.setHeader('Cache-Control','no-store');if(req.method!=='GET')return res.status(405).json({error:'Método não permitido.'});return res.status(200).json({name:'ArqFiel Studio',version:'0.1.0',backend:'ArqFiel 3D MCP v0.2.1',features:['calibração','revisão manual','GLB','prévia geométrica'],requires_human_approval:true,ready:process.env.ARQFIEL_STUDIO_SSO_CONFIRMED==='true'&&!!process.env.ARQFIEL_MCP_API_KEY})};
