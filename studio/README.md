@@ -26,3 +26,9 @@ Não reconstrói fielmente edifícios apenas a partir de imagens vagas. Requer m
 ## Testes
 
 `node --test tests/*.test.cjs`
+
+## Estrutura da publicação
+
+O Vercel serve `public/index.html`, `public/app.js`, `public/styles.css` e `public/workflow.js` como arquivos estáticos. As funções `api/call.js` e `api/status.js` continuam executadas no servidor. O arquivo `vercel.json` não deve usar `builds` legados nessa estrutura, pois é necessário publicar arquivos estáticos e funções simultaneamente.
+
+O repositório GitHub contém o código, mas os projetos Vercel criados por implantação direta ainda não estão vinculados automaticamente ao GitHub. Para ativar novos deploys via commit, conecte o GitHub ao projeto do Studio e configure **Root Directory = studio**. Confirme a proteção de acesso antes de ativar o fluxo automático.
