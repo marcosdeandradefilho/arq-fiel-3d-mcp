@@ -7,6 +7,7 @@ import sys
 from core import validate_project, build_scene, inspect_source, plan_views, render_views
 from assisted_import import extract_trace, calibrate_trace, suggest_rooms, reviewed_project
 from room_preview import render_previews
+from render_pipeline import build_and_render_physical
 from review_editor import create_review_editor
 
 SCHEMA = {'type':'object','additionalProperties':False}
@@ -38,6 +39,9 @@ TOOLS = [
     'width':{'type':'integer'},'height':{'type':'integer'}},'required':['model_glb','views_json','output_dir']}},
  {'name':'build_and_preview','description':'Cria GLB e gera prévias PNG de todos os cômodos com rastreabilidade em uma operação.',
   'inputSchema':{**SCHEMA,'properties':{'project':{'type':'object'},'output_dir':{'type':'string'}},'required':['project','output_dir']}},
+ {'name':'build_and_render_physical','description':'Valida planta confirmada, gera GLB métrico e renderiza cada cômodo com Blender Cycles instalado localmente, retornando PNGs e auditoria; não comprova as-built nem réplica fotográfica.',
+  'inputSchema':{**SCHEMA,'properties':{'project':{'type':'object'},'output_dir':{'type':'string'},'blender_executable':{'type':'string','default':'blender'},'samples':{'type':'integer','minimum':16,'maximum':1024}},
+   'required':['project','output_dir']}},
  {'name':'render_views','description':'Renderiza PNGs cômodo a cômodo usando Blender instalado localmente. Não promete fotorrealismo.',
   'inputSchema':{**SCHEMA,'properties':{'model_glb':{'type':'string'},'views_json':{'type':'string'},'output_dir':{'type':'string'},
                'blender_executable':{'type':'string','default':'blender'},'samples':{'type':'integer','minimum':1,'maximum':256}},
@@ -82,6 +86,7 @@ def dispatch(message):
                 model=build_scene(args['project'],args['output_dir'])
                 preview=render_previews(model['model_glb'],model['views_json'],str(pathlib.Path(args['output_dir'])/'previas'))
                 data={**model,'previews':preview}
+            elif name=='build_and_render_physical':data=build_and_render_physical(args['project'],args['output_dir'],args.get('samples',128),args.get('blender_executable','blender'))
             else:data=render_views(args['model_glb'],args['views_json'],args['output_dir'],args.get('blender_executable','blender'),args.get('samples',32))
             result={'content':[{'type':'text','text':json.dumps(data,ensure_ascii=False)}],'structuredContent':data,'isError':False}
         else:
